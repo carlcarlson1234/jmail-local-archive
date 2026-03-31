@@ -1,0 +1,106 @@
+document_fulltext | id | integer
+document_fulltext | doc_id | text
+document_fulltext | shard_name | text
+document_fulltext | page_number | integer
+document_fulltext | text | text
+document_fulltext | raw_json | jsonb
+document_fulltext | search_vector | tsvector
+document_fulltext | ingested_at | timestamp with time zone
+documents | id | text
+documents | doc_id | text
+documents | title | text
+documents | filename | text
+documents | file_type | text
+documents | page_count | integer
+documents | volume | text
+documents | bates_start | text
+documents | bates_end | text
+documents | release_batch | text
+documents | source | text
+documents | pdf_url | text
+documents | thumbnail_url | text
+documents | raw_json | jsonb
+documents | ingested_at | timestamp with time zone
+emails | id | text
+emails | doc_id | text
+emails | subject | text
+emails | sender | text
+emails | sender_name | text
+emails | recipients | jsonb
+emails | cc | jsonb
+emails | bcc | jsonb
+emails | date | timestamp with time zone
+emails | body | text
+emails | body_html | text
+emails | thread_id | text
+emails | in_reply_to | text
+emails | labels | jsonb
+emails | attachments | jsonb
+emails | starred | boolean
+emails | star_count | integer
+emails | release_batch | text
+emails | source | text
+emails | raw_json | jsonb
+emails | search_vector | tsvector
+emails | ingested_at | timestamp with time zone
+imessage_conversations | id | text
+imessage_conversations | slug | text
+imessage_conversations | title | text
+imessage_conversations | participants | jsonb
+imessage_conversations | message_count | integer
+imessage_conversations | raw_json | jsonb
+imessage_conversations | ingested_at | timestamp with time zone
+imessage_messages | id | text
+imessage_messages | conversation_id | text
+imessage_messages | conversation_slug | text
+imessage_messages | sender | text
+imessage_messages | body | text
+imessage_messages | date | timestamp with time zone
+imessage_messages | attachments | jsonb
+imessage_messages | raw_json | jsonb
+imessage_messages | search_vector | tsvector
+imessage_messages | ingested_at | timestamp with time zone
+people | id | text
+people | name | text
+people | slug | text
+people | aliases | jsonb
+people | description | text
+people | image_url | text
+people | email_addresses | jsonb
+people | raw_json | jsonb
+people | ingested_at | timestamp with time zone
+photo_faces | id | integer
+photo_faces | photo_id | text
+photo_faces | person_id | text
+photo_faces | confidence | text
+photo_faces | bounding_box | jsonb
+photo_faces | raw_json | jsonb
+photo_faces | ingested_at | timestamp with time zone
+photos | id | text
+photos | filename | text
+photos | title | text
+photos | description | text
+photos | date_taken | timestamp with time zone
+photos | width | integer
+photos | height | integer
+photos | image_url | text
+photos | thumbnail_url | text
+photos | volume | text
+photos | release_batch | text
+photos | source | text
+photos | raw_json | jsonb
+photos | ingested_at | timestamp with time zone
+release_batches | id | text
+release_batches | name | text
+release_batches | release_date | timestamp with time zone
+release_batches | description | text
+release_batches | source | text
+release_batches | document_count | integer
+release_batches | raw_json | jsonb
+release_batches | ingested_at | timestamp with time zone
+star_counts | id | integer
+star_counts | entity_type | text
+star_counts | entity_id | text
+star_counts | count | integer
+star_counts | raw_json | jsonb
+star_counts | ingested_at | timestamp with time zone
