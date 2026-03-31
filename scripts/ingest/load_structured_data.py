@@ -281,34 +281,26 @@ def safe_timestamp(val):
 
 def load_parquet_to_table(con, cur, parquet_path, table_name, column_map, id_field="id"):
     """Load a parquet file into a Postgres table using DuckDB to read and psycopg2 to write."""
-    print(f"\n  Loading {parquet_path.name} → {table_name}")
+    print(f"\n  Loading {parquet_path.name} -> {table_name}")
 
     # Get column names from parquet
     parquet_cols = [row[0] for row in con.execute(f"DESCRIBE SELECT * FROM '{parquet_path}'").fetchall()]
     print(f"    Parquet columns: {parquet_cols}")
 
     # Determine which columns to load
-    db_cols = list(column_map.keys())
-    available_parquet_cols = []
-    available_db_cols = []
-    converters = []
+    # Build a filtered list of (db_col, parquet_col, converter) tuples
+    available_cols = []  # list of (db_col, parquet_col, converter)
 
     for db_col, (parquet_col, converter) in column_map.items():
         if parquet_col in parquet_cols or parquet_col == "__raw_json__":
-            available_parquet_cols.append(parquet_col)
-            available_db_cols.append(db_col)
-            converters.append(converter)
+            available_cols.append((db_col, parquet_col, converter))
 
-    if not available_db_cols:
-        print(f"    ⚠ No matching columns found, skipping")
+    if not available_cols:
+        print(f"    No matching columns found, skipping")
         return 0
 
-    # Read all rows from parquet
-    select_cols = [c for c in available_parquet_cols if c != "__raw_json__"]
-    if select_cols:
-        query = f"SELECT {', '.join(select_cols)} FROM '{parquet_path}'"
-    else:
-        query = f"SELECT * FROM '{parquet_path}'"
+    available_db_cols = [c[0] for c in available_cols]
+    print(f"    Mapping {len(available_cols)} columns: {available_db_cols}")
 
     total_count = con.execute(f"SELECT count(*) FROM '{parquet_path}'").fetchone()[0]
     print(f"    Total rows: {total_count:,}")
@@ -332,7 +324,7 @@ def load_parquet_to_table(con, cur, parquet_path, table_name, column_map, id_fie
         for row in rows:
             row_dict = dict(zip(all_col_names, row))
             values = []
-            for db_col, (parquet_col, converter) in column_map.items():
+            for db_col, parquet_col, converter in available_cols:
                 if parquet_col == "__raw_json__":
                     values.append(json.dumps(row_dict, default=str))
                 elif parquet_col in row_dict:
@@ -341,7 +333,7 @@ def load_parquet_to_table(con, cur, parquet_path, table_name, column_map, id_fie
                     values.append(None)
             values_list.append(values)
 
-        placeholders = ", ".join(["%s"] * len(available_db_cols))
+        placeholders = ", ".join(["%s"] * len(available_cols))
         cols_str = ", ".join(available_db_cols)
 
         # Use ON CONFLICT for tables with primary keys
@@ -361,7 +353,7 @@ def load_parquet_to_table(con, cur, parquet_path, table_name, column_map, id_fie
         sys.stdout.write(f"\r    Loaded {loaded:,}/{total_count:,}")
         sys.stdout.flush()
 
-    print(f"\r    Loaded {loaded:,}/{total_count:,} rows ✓")
+    print(f"\r    Loaded {loaded:,}/{total_count:,} rows [OK]")
     return loaded
 
 
@@ -371,14 +363,14 @@ def normalize_email_recipients(cur):
     cur.execute("DELETE FROM email_recipients")
 
     for rtype in ['recipients', 'cc', 'bcc']:
-        cur.execute(f"""
+        sql = """
             INSERT INTO email_recipients (email_id, recipient_type, email, name)
             SELECT
                 e.id,
-                '{rtype}',
+                %s,
                 CASE
                     WHEN jsonb_typeof(elem) = 'object' THEN elem->>'email'
-                    WHEN jsonb_typeof(elem) = 'string' THEN elem#>>'{{}}'
+                    WHEN jsonb_typeof(elem) = 'string' THEN trim('"' FROM elem::text)
                     ELSE NULL
                 END,
                 CASE
@@ -388,16 +380,17 @@ def normalize_email_recipients(cur):
             FROM emails e,
                  jsonb_array_elements(
                      CASE
-                         WHEN e.{rtype} IS NOT NULL AND jsonb_typeof(e.{rtype}) = 'array'
-                         THEN e.{rtype}
+                         WHEN e.""" + rtype + """ IS NOT NULL AND jsonb_typeof(e.""" + rtype + """) = 'array'
+                         THEN e.""" + rtype + """
                          ELSE '[]'::jsonb
                      END
                  ) AS elem
-        """)
+        """
+        cur.execute(sql, (rtype,))
 
     cur.execute("SELECT count(*) FROM email_recipients")
     count = cur.fetchone()[0]
-    print(f"    Created {count:,} recipient rows ✓")
+    print(f"    Created {count:,} recipient rows [OK]")
     return count
 
 
@@ -418,7 +411,7 @@ def main():
     print("Creating tables...")
     cur.execute(SCHEMA_SQL)
     pg.commit()
-    print("  ✓ Schema created")
+    print("  [OK] Schema created")
 
     # Connect DuckDB for parquet reading
     duck = duckdb.connect()
@@ -620,7 +613,7 @@ def main():
 
                 pg.commit()
                 total_ft += shard_loaded
-                print(f"\r    Loaded {shard_loaded:,} rows from {shard_name} ✓")
+                print(f"\r    Loaded {shard_loaded:,} rows from {shard_name} [OK]")
 
             row_counts["document_fulltext"] = total_ft
             tables_loaded.append("document_fulltext")
@@ -708,7 +701,7 @@ def main():
             WHERE id = %s
         """, (json.dumps(errors), run_id))
         pg.commit()
-        print(f"\n\n  ✗ FATAL ERROR: {e}")
+        print(f"\n\n  [FAIL] FATAL ERROR: {e}")
         import traceback
         traceback.print_exc()
         raise

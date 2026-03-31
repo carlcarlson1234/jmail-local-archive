@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
+import postgres from 'postgres';
 
 export async function GET() {
   try {
-    const { db } = await import('@jmail/db');
-    const result = await db.execute({ sql: 'SELECT 1 as ok' } as any);
+    const sql = postgres(process.env.DATABASE_URL || 'postgresql://jmail:jmail_local@localhost:5432/jmail');
+    const result = await sql`SELECT 1 as ok`;
+    await sql.end();
     return NextResponse.json({ status: 'ok', database: 'connected', timestamp: new Date().toISOString() });
   } catch (error: any) {
     return NextResponse.json({ status: 'error', database: 'disconnected', error: error.message }, { status: 503 });
