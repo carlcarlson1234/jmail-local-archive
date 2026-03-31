@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: jmail-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: jmail
+      POSTGRES_PASSWORD: jmail_local
+      POSTGRES_DB: jmail
+    volumes:
+      - jmail-pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jmail"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  jmail-pgdata:
+    name: jmail-pgdata

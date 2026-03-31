@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment
+.env
+.env.local
+
+# Data (large files, not for git)
+data/raw/
+data/raw-assets/
+data/logs/
+
+# Build output
+.next/
+out/
+dist/
+
+# System
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

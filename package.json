@@ -1,0 +1,18 @@
+{
+  "name": "jmail-local-archive",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first archival and query platform for the public Jmail ecosystem",
+  "scripts": {
+    "dev": "pnpm --filter @jmail/web dev",
+    "build": "pnpm --filter @jmail/web build",
+    "db:generate": "pnpm --filter @jmail/db generate",
+    "db:migrate": "pnpm --filter @jmail/db migrate",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
